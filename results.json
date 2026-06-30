@@ -1,0 +1,60 @@
+{
+  "n_loans": 2260701,
+  "ttc_default": 0.1191,
+  "active_loans": 907904,
+  "active_ead": 9510384856.0,
+  "delinquency_rate": 3.08,
+  "impaired_share": 2.57,
+  "dr12_by_vintage": {
+    "2012": 5.59,
+    "2013": 4.71,
+    "2014": 5.18,
+    "2015": 5.93,
+    "2016": 6.76,
+    "2017": 6.28
+  },
+  "psi_by_vintage": {
+    "2013": 0.001,
+    "2014": 0.0,
+    "2015": 0.006,
+    "2016": 0.023,
+    "2017": 0.041,
+    "2018": 0.132
+  },
+  "hhi_state": 0.051,
+  "top5_state_pct": 41.3,
+  "hhi_grade": 0.236,
+  "largest_purpose_pct": 58.4,
+  "ewi": [
+    {
+      "indicator": "Vintage 12m default trend",
+      "value": "6.8% (latest mature vintage)",
+      "rag": "RED"
+    },
+    {
+      "indicator": "Live-book delinquency rate",
+      "value": "3.1% of active EAD",
+      "rag": "GREEN"
+    },
+    {
+      "indicator": "Impaired (30+ dpd) share",
+      "value": "2.6% of active EAD",
+      "rag": "GREEN"
+    },
+    {
+      "indicator": "Scorecard population drift (PSI)",
+      "value": "0.132 vs baseline",
+      "rag": "AMBER"
+    },
+    {
+      "indicator": "Geographic concentration (HHI)",
+      "value": "0.051 (top-5 states 41%)",
+      "rag": "GREEN"
+    },
+    {
+      "indicator": "Product concentration (largest purpose)",
+      "value": "58% of EAD",
+      "rag": "AMBER"
+    }
+  ]
+}
