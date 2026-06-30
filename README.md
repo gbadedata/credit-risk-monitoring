@@ -103,7 +103,3 @@ python analysis.py        # builds all monitoring metrics, figures, and results.
 ## Data
 
 The underlying **Lending Club** loan data is publicly available and used here for a non-commercial portfolio project. The **code** is released under the MIT License (see `LICENSE`).
-
----
-
-*Built as a portfolio project demonstrating credit-risk portfolio monitoring and management-information reporting.*
