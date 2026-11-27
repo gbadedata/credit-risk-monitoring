@@ -1,25 +1,51 @@
 {
-  "n_loans": 2260701,
-  "ttc_default": 0.1191,
+  "n_loans": 2260668,
+  "ttc_default": 0.1192,
   "active_loans": 907904,
   "active_ead": 9510384856.0,
-  "delinquency_rate": 3.08,
-  "impaired_share": 2.57,
+  "delinquency_rate_16dpd": 3.08,
+  "arrears_31dpd_share": 2.57,
+  "snapshot": "Mar 2019",
+  "dr12_definition": "default dated within 12 months of issue; default = last payment + 4 months",
+  "dr12_observable_share": {
+    "2012": 1.0,
+    "2013": 1.0,
+    "2014": 1.0,
+    "2015": 1.0,
+    "2016": 1.0,
+    "2017": 0.733
+  },
+  "dr12_at_2013_grade_mix": {
+    "2012": 3.39,
+    "2013": 2.65,
+    "2014": 2.77,
+    "2015": 3.46,
+    "2016": 4.28,
+    "2017": 4.19
+  },
+  "psi_n_loans": {
+    "2013": 134814,
+    "2014": 235629,
+    "2015": 421095,
+    "2016": 434407,
+    "2017": 443579,
+    "2018": 495241
+  },
   "dr12_by_vintage": {
-    "2012": 5.59,
-    "2013": 4.71,
-    "2014": 5.18,
-    "2015": 5.93,
-    "2016": 6.76,
-    "2017": 6.28
+    "2012": 3.16,
+    "2013": 2.65,
+    "2014": 2.88,
+    "2015": 3.39,
+    "2016": 3.99,
+    "2017": 3.78
   },
   "psi_by_vintage": {
-    "2013": 0.001,
+    "2013": 0.0,
     "2014": 0.0,
-    "2015": 0.006,
-    "2016": 0.023,
-    "2017": 0.041,
-    "2018": 0.132
+    "2015": 0.009,
+    "2016": 0.031,
+    "2017": 0.076,
+    "2018": 0.151
   },
   "hhi_state": 0.051,
   "top5_state_pct": 41.3,
@@ -28,22 +54,22 @@
   "ewi": [
     {
       "indicator": "Vintage 12m default trend",
-      "value": "6.8% (latest mature vintage)",
+      "value": "4.0% (2016 vintage; 4.3% at 2013 grade mix)",
       "rag": "RED"
     },
     {
-      "indicator": "Live-book delinquency rate",
+      "indicator": "Live-book delinquency (16+ dpd)",
       "value": "3.1% of active EAD",
       "rag": "GREEN"
     },
     {
-      "indicator": "Impaired (30+ dpd) share",
+      "indicator": "Arrears 31+ dpd share",
       "value": "2.6% of active EAD",
       "rag": "GREEN"
     },
     {
-      "indicator": "Scorecard population drift (PSI)",
-      "value": "0.132 vs baseline",
+      "indicator": "Application-score drift (PSI)",
+      "value": "0.151 (2018 vs 2013-14)",
       "rag": "AMBER"
     },
     {

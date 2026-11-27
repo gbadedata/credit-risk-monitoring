@@ -1,8 +1,15 @@
-"""
-Credit risk monitoring and management-information pack on real loans.
-Vintage cohort performance, live-book delinquency, scorecard drift (PSI),
-portfolio concentration, and a RAG early-warning dashboard.
-"""
+# %% [markdown]
+# # Credit risk monitoring and MI pack
+#
+# A monthly-style credit risk monitoring pack built from real Lending Club loans: vintage performance,
+# the arrears profile of the live book, drift in the application-score population, concentration, and a
+# RAG-rated set of early-warning indicators. The same numbers feed `MI_PACK.md`.
+#
+# **Data snapshot.** The latest payment date in the file (March 2019) is treated as the reporting date.
+# **Default.** A charged-off loan's default is dated at its last payment plus four months, roughly 90+ days
+# past due, because the file has no month-by-month delinquency history (see `lending_club.py`).
+
+# %%
 import warnings; warnings.filterwarnings("ignore")
 import numpy as np, pandas as pd, json, os
 import matplotlib; matplotlib.use("Agg")
@@ -38,6 +45,19 @@ obs12,bad12=lc.window_outcome(df,12)
 df['obs_12']=obs12; df['bad_12']=bad12
 print(f"  {len(df):,} loans | ever charged off by the snapshot {df['default'].mean():.3f}")
 
+# %% [markdown]
+# ## 1. Vintage performance
+# Loans are grouped by year of issue. The headline early-warning measure is the share of each vintage that
+# defaulted within 12 months of issue, counting only loans whose 12-month window (plus a six-month allowance
+# for charge-off to be recorded) had passed by the snapshot. A vintage where only some loans meet that test is
+# marked as partly observable. Measuring a fixed window avoids comparing old vintages, which have had years to
+# default, with new ones that have not.
+#
+# Because the mix of grades shifts over time, each vintage's 12-month rate is also restated at the 2013 grade
+# mix. If the restated rate still rises, credit quality worsened within grades rather than the book simply
+# moving towards riskier grades.
+
+# %%
 # =====================================================================
 # 1) VINTAGE COHORT PERFORMANCE
 # =====================================================================
@@ -71,6 +91,13 @@ for v in dr12:
     dr12_adj[v]=float((by_g.reindex(ref.index).fillna(by_g.mean())*ref).sum()*100)
 print("12-month default at 2013 grade mix:",{k:round(v,2) for k,v in dr12_adj.items()})
 
+# %% [markdown]
+# ## 2. Live-book arrears
+# The active book is every loan still Current, In Grace Period, Late or in Default status with principal
+# outstanding. Exposure is outstanding principal. Lending Club's status labels map to days past due as
+# shown; "Default" in its data means 121+ days past due, ahead of charge-off.
+
+# %%
 # =====================================================================
 # 2) LIVE-BOOK DELINQUENCY PROFILE
 # =====================================================================
@@ -88,6 +115,14 @@ arrears30_ead=ead_by[['Late (31-120 days)','Default']].sum()
 arrears30_share=float(arrears30_ead/tot_ead*100)      # 31+ days past due
 print(f"Live book: {len(act):,} active loans | EAD ${tot_ead/1e9:.2f}bn | 16+ dpd {delinq_rate:.2f}% | 31+ dpd {arrears30_share:.2f}%")
 
+# %% [markdown]
+# ## 3. Application-score drift
+# A simple PD model is fitted on loans issued up to 2014 and used to score **every** issued loan. Population
+# Stability Index then compares each vintage's score distribution with the 2013-14 baseline. PSI needs only
+# application data, so every loan counts, including those still running. Under 0.10 is usually read as
+# stable, 0.10-0.25 as a moderate shift and over 0.25 as significant.
+
+# %%
 # =====================================================================
 # 3) SCORECARD DRIFT  (PSI of the application score by vintage vs baseline)
 # =====================================================================
@@ -114,6 +149,12 @@ for v in range(2013,2019):
     psi_by[v]=float((((base_d-d)*np.log((base_d+1e-6)/(d+1e-6)))).sum()); psi_n[v]=int(len(s_))
 print("Application-score PSI by vintage (all issued loans, vs 2013-14):",{k:round(v,3) for k,v in psi_by.items()})
 
+# %% [markdown]
+# ## 4. Concentration
+# Herfindahl-Hirschman Index (sum of squared shares) of active exposure by state and by grade, and the share
+# of the largest loan purpose.
+
+# %%
 # =====================================================================
 # 4) PORTFOLIO CONCENTRATION  (HHI + top exposures)
 # =====================================================================
@@ -124,6 +165,14 @@ gr=act.groupby('grade')['out_prncp'].sum().sort_values(ascending=False); gr_shar
 pu=act.groupby('purpose')['out_prncp'].sum().sort_values(ascending=False); pu_share=pu/pu.sum(); top_purpose=float(pu_share.head(1).sum()*100)
 print(f"Concentration: state HHI {hhi_state:.3f} (top5 {top5_state:.1f}%) | grade HHI {hhi_grade:.3f} | largest purpose {top_purpose:.1f}%")
 
+# %% [markdown]
+# ## 5. Early-warning indicators
+# Each indicator has GREEN and AMBER limits set in the code below; anything beyond AMBER is RED. The vintage
+# trigger compares the latest fully observable vintage's 12-month default rate with the average of the two
+# earliest vintages in the table (RED at 25% or more above). The limits are illustrative, not a lender's
+# risk appetite.
+
+# %%
 # =====================================================================
 # 5) EARLY-WARNING INDICATORS  (RAG)
 # =====================================================================
@@ -144,6 +193,11 @@ EWI=[
 ]
 for n,v,r in EWI: print(f"  [{r:5s}] {n}: {v}")
 
+# %% [markdown]
+# ## 6. Figures
+# ### Cumulative default by months on book
+
+# %%
 # =====================================================================
 # FIGURES
 # =====================================================================
@@ -156,6 +210,10 @@ ax.set_title("Vintage cohort performance: cumulative default by months on book")
 ax.legend(title="Vintage",frameon=False,ncol=5,loc="upper left")
 plt.tight_layout(); plt.savefig(f"{FIG}/01_vintage_curves.png",bbox_inches="tight"); plt.close()
 
+# %% [markdown]
+# ### 12-month default rate by vintage
+
+# %%
 # F2 12-month default by vintage
 fig,ax=plt.subplots(figsize=(8.6,4.5))
 ks=list(dr12.keys()); vs=[dr12[k] for k in ks]
@@ -169,6 +227,10 @@ ax.set_ylabel("Default within 12 months of issue (%)")
 ax.set_title("Early-warning: 12-month default rate by vintage" + (" (* partly observable)" if partial else ""))
 ax.legend(frameon=False); plt.tight_layout(); plt.savefig(f"{FIG}/02_vintage_12mob.png",bbox_inches="tight"); plt.close()
 
+# %% [markdown]
+# ### Live-book arrears profile
+
+# %%
 # F3 delinquency profile
 fig,ax=plt.subplots(figsize=(8.6,4.5))
 vals=[ead_by[b] for b in BUCKETS]; cols=[GREEN,"#8FB99B",AMBER,"#C8862B",RED]
@@ -177,6 +239,10 @@ ax.yaxis.set_major_formatter(FuncFormatter(usd))
 ax.set_title(f"Live-book arrears profile (active EAD ${tot_ead/1e9:.1f}bn, 16+ dpd {delinq_rate:.1f}%)")
 plt.tight_layout(); plt.savefig(f"{FIG}/03_delinquency_profile.png",bbox_inches="tight"); plt.close()
 
+# %% [markdown]
+# ### Application-score drift by vintage
+
+# %%
 # F4 PSI drift
 fig,ax=plt.subplots(figsize=(8.6,4.5))
 ks=list(psi_by.keys()); vs=[psi_by[k] for k in ks]
@@ -187,6 +253,10 @@ ax.set_ylabel("PSI vs 2013-14 baseline"); ax.set_title("Application-score popula
 ax.set_ylim(0,max(0.3,max(vs)*1.2)); ax.legend(frameon=False)
 plt.tight_layout(); plt.savefig(f"{FIG}/04_psi_drift.png",bbox_inches="tight"); plt.close()
 
+# %% [markdown]
+# ### Geographic concentration
+
+# %%
 # F5 concentration by state
 fig,ax=plt.subplots(figsize=(9,4.6)); top=st_share.head(10)*100
 ax.bar(top.index,top.values,color=NAVY,edgecolor="white")
@@ -195,6 +265,10 @@ ax.set_ylabel("Share of active EAD (%)"); ax2.set_ylabel("Cumulative (%)",color=
 ax.set_title(f"Geographic concentration: top-10 states (HHI {hhi_state:.3f}, well-diversified)")
 plt.tight_layout(); plt.savefig(f"{FIG}/05_concentration_state.png",bbox_inches="tight"); plt.close()
 
+# %% [markdown]
+# ### Early-warning dashboard
+
+# %%
 # F6 early-warning RAG dashboard
 fig,ax=plt.subplots(figsize=(9.4,4.4)); ax.axis('off')
 ax.set_xlim(0,10); ax.set_ylim(0,len(EWI)+1)
@@ -207,6 +281,12 @@ for i,(name,val,r) in enumerate(EWI):
     ax.add_patch(Rectangle((9.25,y+0.25),0.5,0.5,facecolor=RAGC[r],edgecolor="white"))
 plt.tight_layout(); plt.savefig(f"{FIG}/06_ewi_dashboard.png",bbox_inches="tight",dpi=130); plt.close()
 
+# %% [markdown]
+# ### Default rate by risk band: early vs recent vintages
+# Loans in the same PD band defaulted more often in the 2016-17 vintages than in 2013-14, which points to
+# worse outcomes at the same application risk rather than only a riskier mix.
+
+# %%
 # F7 score-band default: early vs recent vintages (quality drift)
 pf['band']=pd.qcut(pf['pd'],8,duplicates='drop',labels=False)
 obs=pf['obs_12']
@@ -220,6 +300,11 @@ ax.set_xlabel("PD band (low to high risk)"); ax.set_ylabel("12-month default rat
 ax.set_title("Default rate by risk band: early vs recent vintages"); ax.legend(frameon=False)
 plt.tight_layout(); plt.savefig(f"{FIG}/07_band_trend.png",bbox_inches="tight"); plt.close()
 
+# %% [markdown]
+# ## Save the results
+# `results.json` holds every number quoted in the README and MI pack.
+
+# %%
 # =====================================================================
 S=dict(
  n_loans=int(len(df)),ttc_default=round(float(ttc),4),
@@ -236,3 +321,14 @@ S=dict(
 json.dump(S,open(f"{OUT}/results.json","w"),indent=2)
 pd.DataFrame({'state':st.index,'active_ead':st.values,'share_pct':(st_share.values*100).round(2)}).to_csv(f"{DAT}/exposure_by_state.csv",index=False)
 print("\n=== SUMMARY ==="); print(json.dumps(S,indent=2)); print("DONE")
+
+# %% [markdown]
+# ## Limitations
+# - **Approximate default dating.** Default is dated at last payment plus four months; the file has no
+#   delinquency history, so roll rates between arrears buckets cannot be measured.
+# - **A single snapshot.** Lending Club published one cut of the data, so this is one month's pack, not a
+#   time series of packs. Trends come from comparing vintages.
+# - **Late-2016 curves.** In the cumulative curves the last few months of the 2016 vintage are slightly
+#   understated for loans issued late in the year, which had not quite reached 24 months plus the
+#   charge-off allowance.
+# - **Illustrative limits.** The RAG thresholds are reasonable defaults, not a calibrated risk appetite.
